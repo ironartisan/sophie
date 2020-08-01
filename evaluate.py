@@ -29,13 +29,13 @@ def evaluate(loader, generator):
     with torch.no_grad():
         for batch in loader:
             batch = [tensor.cuda() for tensor in batch]
-            (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, vgg_list) = batch
+            (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
 
             ade, fde = [], []
             total_traj += pred_traj_gt.size(1)
 
             for _ in range(NUM_SAMPLES):
-                pred_traj_fake_rel = generator(obs_traj, obs_traj_rel, vgg_list)
+                pred_traj_fake_rel = generator(obs_traj, obs_traj_rel)
                 pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
                 ade.append(displacement_error(pred_traj_fake, pred_traj_gt, mode='raw'))
                 fde.append(final_displacement_error(pred_traj_fake[-1], pred_traj_gt[-1], mode='raw'))

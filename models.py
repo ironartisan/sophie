@@ -128,7 +128,7 @@ class SocialAttention(nn.Module):
         super(SocialAttention, self).__init__()
 
         self.h_dim = H_DIM
-        self.bottleneck_dim = BOTTLENECK_DIM
+        self.bottleneck_dim = ATTENTION_BOTTLENECK_DIM
         self.embedding_dim = EMBEDDING_DIM
 
         mlp_pre_dim = self.embedding_dim + self.h_dim
@@ -175,7 +175,7 @@ class TrajectoryGenerator(nn.Module):
 
         self.encoder = Encoder()
         self.sattn = SocialAttention()
-        self.pattn = PhysicalAttention()
+        # self.pattn = PhysicalAttention()
         self.decoder = Decoder()
 
         input_dim = self.h_dim + 2*self.bottleneck_dim
@@ -189,15 +189,17 @@ class TrajectoryGenerator(nn.Module):
         vec = z_decoder.view(1, -1).repeat(npeds, 1)
         return torch.cat((_input, vec), dim=1)
 
-    def forward(self, obs_traj, obs_traj_rel, vgg_list):
+    def forward(self, obs_traj, obs_traj_rel):
 
         npeds = obs_traj_rel.size(1)
         final_encoder_h = self.encoder(obs_traj_rel)
 
         end_pos = obs_traj[-1, :, :, :]
         attn_s = self.sattn(final_encoder_h, end_pos)
-        attn_p = self.pattn(vgg_list, end_pos)
-        mlp_decoder_context_input = torch.cat([final_encoder_h[:, 0, :], attn_s, attn_p], dim=1)
+        # attn_p = self.pattn(vgg_list, end_pos)
+        # final_encoder_h torch.Size([3, 64, 64])
+        # attn_s torch.Size([3, 32])
+        mlp_decoder_context_input = torch.cat([final_encoder_h[:, 0, :], attn_s], dim=1)
 
         noise_input = self.mlp_decoder_context(mlp_decoder_context_input)
         decoder_h = self.add_noise(noise_input)

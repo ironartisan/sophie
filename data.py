@@ -18,13 +18,12 @@ def read_file(path, delim='\t'):
     return np.asarray(data)
 
 def collate(data):
-    obs_seq, pred_seq, obs_seq_rel, pred_seq_rel, vgg_list = zip(*data)
+    obs_seq, pred_seq, obs_seq_rel, pred_seq_rel = zip(*data)
     obs_seq = torch.cat(obs_seq, dim=0).permute(3, 0, 1, 2)
     pred_seq = torch.cat(pred_seq, dim=0).permute(2, 0, 1)
     obs_seq_rel = torch.cat(obs_seq_rel, dim=0).permute(3, 0, 1, 2)
     pred_seq_rel = torch.cat(pred_seq_rel, dim=0).permute(2, 0, 1)
-    vgg_list = torch.cat(vgg_list, dim=0).repeat(obs_seq.size(1), 1, 1)
-    return tuple([obs_seq, pred_seq, obs_seq_rel, pred_seq_rel, vgg_list])
+    return tuple([obs_seq, pred_seq, obs_seq_rel, pred_seq_rel])
 
 def data_loader(path):
     dset = TrajDataset(path)
@@ -48,9 +47,9 @@ class TrajDataset(Dataset):
             frames = np.unique(data[:, 0]).tolist()
 
             hkl_path = os.path.splitext(path)[0] + ".pkl"
-            with open(hkl_path, 'rb') as handle:
-                new_fet = pickle.load(handle, encoding='bytes')
-            fet_map[hkl_path] = torch.from_numpy(new_fet)
+            # with open(hkl_path, 'rb') as handle:
+            #     new_fet = pickle.load(handle, encoding='bytes')
+            # fet_map[hkl_path] = torch.from_numpy(new_fet)
 
             frame_data = [data[frame == data[:, 0], :] for frame in frames]
             num_sequences = len(frames) - seq_len + 1
@@ -98,7 +97,7 @@ class TrajDataset(Dataset):
 
                     seq_list.append(curr_seq_exp[:num_peds_considered])
                     seq_list_rel.append(curr_seq_rel_exp[:num_peds_considered])
-                    fet_list.append(hkl_path)
+                    # fet_list.append(hkl_path)
 
         self.num_seq = len(seq_list)
         seq_list = np.concatenate(seq_list, axis=0)
@@ -112,8 +111,8 @@ class TrajDataset(Dataset):
         self.pred_traj_rel = torch.from_numpy(
             seq_list_rel[:, 0, :, OBS_LEN:]).type(torch.float)
 
-        self.fet_map = fet_map
-        self.fet_list = fet_list
+        # self.fet_map = fet_map
+        # self.fet_list = fet_list
 
         cum_start_idx = [0] + np.cumsum(num_peds_in_seq).tolist()
         self.seq_start_end = [
@@ -129,6 +128,6 @@ class TrajDataset(Dataset):
         out = [
             self.obs_traj[start:end, :], self.pred_traj[start:end, :],
             self.obs_traj_rel[start:end, :], self.pred_traj_rel[start:end, :],
-            self.fet_map[self.fet_list[index]]
+            # self.fet_map[self.fet_list[index]]
         ]
         return out

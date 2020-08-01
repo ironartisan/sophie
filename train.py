@@ -113,11 +113,11 @@ def main():
 def discriminator_step(batch, generator, discriminator, d_loss_fn, optimizer_d):
     
     batch = [tensor.cuda() for tensor in batch]
-    (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, vgg_list) = batch
+    (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
     losses = {}
     loss = torch.zeros(1).to(pred_traj_gt)
 
-    generator_out = generator(obs_traj, obs_traj_rel, vgg_list)
+    generator_out = generator(obs_traj, obs_traj_rel)
 
     pred_traj_fake_rel = generator_out
     pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
@@ -143,13 +143,13 @@ def discriminator_step(batch, generator, discriminator, d_loss_fn, optimizer_d):
 def generator_step(batch, generator, discriminator, g_loss_fn, optimizer_g):
 
     batch = [tensor.cuda() for tensor in batch]
-    (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, vgg_list) = batch
+    (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
     losses = {}
     loss = torch.zeros(1).to(pred_traj_gt)
     
     g_l2_loss_rel = []
     for _ in range(BEST_K):
-        generator_out = generator(obs_traj, obs_traj_rel, vgg_list)
+        generator_out = generator(obs_traj, obs_traj_rel)
 
         pred_traj_fake_rel = generator_out
         pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
@@ -198,9 +198,9 @@ def check_accuracy(loader, generator, discriminator, d_loss_fn, limit=False):
     with torch.no_grad():
         for batch in loader:
             batch = [tensor.cuda() for tensor in batch]
-            (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, vgg_list) = batch
+            (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
 
-            pred_traj_fake_rel = generator(obs_traj, obs_traj_rel, vgg_list)
+            pred_traj_fake_rel = generator(obs_traj, obs_traj_rel)
             pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
 
             g_l2_loss_abs = l2_loss(pred_traj_fake, pred_traj_gt, mode='sum')
