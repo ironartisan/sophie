@@ -62,7 +62,7 @@ generator.load_state_dict(model['g'])
 generator.cuda()
 generator.eval()
 
-load_and_evaluate(generator, 'train')
-load_and_evaluate(generator, 'val')
+# load_and_evaluate(generator, 'train')
+# load_and_evaluate(generator, 'val')
 load_and_evaluate(generator, 'test')
 

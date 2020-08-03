@@ -3,6 +3,9 @@ import math
 import random
 import numpy as np
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy
 import torch
 
 from constants import *
@@ -63,3 +66,65 @@ def final_displacement_error(
         return loss
     else:
         return torch.sum(loss)
+def cal_ade(pred_traj_gt, pred_traj_fake):
+    ade = displacement_error(pred_traj_fake, pred_traj_gt)
+    return ade
+
+
+def cal_fde(pred_traj_gt, pred_traj_fake):
+    fde = final_displacement_error(pred_traj_fake[-1], pred_traj_gt[-1])
+    return fde
+
+
+def process_normal(traj_data, normal_parm):
+    traj_data[:, :, 0] = traj_data[:, :, 0] * normal_parm['lat_field'] + normal_parm['lat_min']
+
+    traj_data[:, :, 1] = traj_data[:, :, 1] * normal_parm['long_field'] + normal_parm['long_min']
+
+    traj_data[:, :, 2] = traj_data[:, :, 2] * normal_parm['alt_field'] + normal_parm['alt_min']
+
+    return traj_data
+
+
+def show_t(obs_traj, pred_traj_gt, predictions, param):
+    obs_traj = process_normal(obs_traj, param)
+    pred_traj_gt = process_normal(pred_traj_gt, param)
+
+    for i in range(len(predictions)):
+        predictions[i][0] = process_normal(predictions[i][0], param)
+        predictions[i][0] = numpy.concatenate((numpy.expand_dims(obs_traj[-1, :, :], axis=0), predictions[i][0]),
+                                              axis=0)
+
+    pred_traj_gt = numpy.concatenate((numpy.expand_dims(obs_traj[-1, :, :], axis=0), pred_traj_gt), axis=0)
+
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    line_width = 1
+    marker_size = 3
+
+    ax.plot(obs_traj[:, 0, 0], obs_traj[:, 0, 1], obs_traj[:, 0, 2], color='r', label='input', linewidth=line_width)
+    ax.plot(pred_traj_gt[:, 0, 0], pred_traj_gt[:, 0, 1], pred_traj_gt[:, 0, 2], color='g', label='groudtruth',
+            linewidth=line_width, marker='D', markersize=marker_size)
+
+    result_text = ''
+    for i in range(len(predictions)):
+        (prediction, ade, fde, label) = predictions[i]
+        # print('%s len is %d' % (label, len(prediction)))
+        ax.plot(prediction[:, 0, 0], prediction[:, 0, 1], prediction[:, 0, 2], color=CORLOR_LIST[i], label=label,
+                linewidth=line_width, marker=MARKER_LIST[i], markersize=marker_size)
+        result_text = result_text + '%s ade  = %f    %s fde = %f\n' % (label, ade, label, fde)
+
+    plt.title(result_text, y=-0.2)
+
+    ax.legend()
+    plt.show()
+
+
+def get_min_ade_fde(metrics, key='ade'):
+    min_ade = 100000
+    for i in range(len(metrics[key])):
+        if metrics[key][i] < min_ade:
+            min_ade = metrics['ade'][i]
+            min_fde = metrics['fde'][i]
+
+    return min_ade, min_fde

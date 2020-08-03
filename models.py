@@ -27,7 +27,7 @@ class Encoder(nn.Module):
         self.embedding_dim = EMBEDDING_DIM
 
         self.encoder = nn.LSTM(self.embedding_dim, self.h_dim, 1)
-        self.spatial_embedding = nn.Linear(2, self.embedding_dim)
+        self.spatial_embedding = nn.Linear(INPUT_DIM, self.embedding_dim)
 
     def init_hidden(self, batch):
         h = torch.zeros(1, batch, self.h_dim).cuda()
@@ -40,7 +40,7 @@ class Encoder(nn.Module):
         npeds = obs_traj.size(1)
         total = npeds * (MAX_PEDS if padded else 1)
 
-        obs_traj_embedding = self.spatial_embedding(obs_traj.view(-1, 2))
+        obs_traj_embedding = self.spatial_embedding(obs_traj.view(-1, INPUT_DIM))
         obs_traj_embedding = obs_traj_embedding.view(-1, total, self.embedding_dim)
         state = self.init_hidden(total)
         output, state = self.encoder(obs_traj_embedding, state)
@@ -60,8 +60,8 @@ class Decoder(nn.Module):
         self.embedding_dim = EMBEDDING_DIM
 
         self.decoder = nn.LSTM(self.embedding_dim, self.h_dim, 1)
-        self.spatial_embedding = nn.Linear(2, self.embedding_dim)
-        self.hidden2pos = nn.Linear(self.h_dim, 2)
+        self.spatial_embedding = nn.Linear(INPUT_DIM, self.embedding_dim)
+        self.hidden2pos = nn.Linear(self.h_dim, INPUT_DIM)
 
     def forward(self, last_pos, last_pos_rel, state_tuple):
         npeds = last_pos.size(0)
@@ -93,7 +93,7 @@ class PhysicalAttention(nn.Module):
         self.bottleneck_dim = BOTTLENECK_DIM
         self.embedding_dim = EMBEDDING_DIM
 
-        self.spatial_embedding = nn.Linear(2, self.embedding_dim)
+        self.spatial_embedding = nn.Linear(INPUT_DIM, self.embedding_dim)
         self.pre_att_proj = nn.Linear(self.D, self.D_down)
 
         mlp_pre_dim = self.embedding_dim + self.D_down
@@ -134,7 +134,7 @@ class SocialAttention(nn.Module):
         mlp_pre_dim = self.embedding_dim + self.h_dim
         mlp_pre_attn_dims = [mlp_pre_dim, 512, self.bottleneck_dim]
 
-        self.spatial_embedding = nn.Linear(2, self.embedding_dim)
+        self.spatial_embedding = nn.Linear(INPUT_DIM, self.embedding_dim)
         self.mlp_pre_attn = make_mlp(mlp_pre_attn_dims)
         self.attn = nn.Linear(MAX_PEDS*self.bottleneck_dim, MAX_PEDS)
 
@@ -148,7 +148,7 @@ class SocialAttention(nn.Module):
 
         npeds = h_states.size(0)
         curr_rel_pos = end_pos[:, :, :] - end_pos[:, 0:1, :]
-        curr_rel_embedding = self.spatial_embedding(curr_rel_pos.view(-1, 2))
+        curr_rel_embedding = self.spatial_embedding(curr_rel_pos.view(-1, INPUT_DIM))
         curr_rel_embedding = curr_rel_embedding.view(npeds, MAX_PEDS, self.embedding_dim)
 
         mlp_h_input = torch.cat([h_states, curr_rel_embedding], dim=2)

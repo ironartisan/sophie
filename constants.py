@@ -1,7 +1,8 @@
 OBS_LEN = 8
 PRED_LEN = 12
+# PRED_LEN = 8
 NUM_WORKERS = 0
-
+INPUT_DIM = 3
 MLP_DIM = 64
 H_DIM = 64
 EMBEDDING_DIM = 16
@@ -9,15 +10,16 @@ BOTTLENECK_DIM = 32
 ATTENTION_BOTTLENECK_DIM = 64
 NOISE_DIM = 8
 
-DATASET_NAME = 'eth'
+DATASET_NAME = 'asia'
 NUM_ITERATIONS = 20000
-NUM_EPOCHS = 500
+NUM_EPOCHS = 200
+# NUM_EPOCHS = 500
 G_LR = 1e-3
 D_LR = 1e-3
 G_STEPS = 1
 D_STEPS = 2
 
-MAX_PEDS = 64
+MAX_PEDS = 96
 BEST_K = 20
 PRINT_EVERY = 250
 NUM_SAMPLES = 20
@@ -26,3 +28,16 @@ NUM_SAMPLES_CHECK = 5000
 ATTN_L = 900
 ATTN_D = 512
 ATTN_D_DOWN = 16
+
+
+CORLOR_LIST = ['y', 'c', 'm', 'k', 'b']
+MARKER_LIST = ['x', '+', '1', '|', 'v']
+
+ASIA_PARM = {
+    'lat_min': 3.1933607061071148,
+    'lat_field': 56.80018735854687,
+    'long_min': 70.1073857229127,
+    'long_field': 69.8803146893142,
+    'alt_min': 0.0,
+    'alt_field': 124400.0
+}
