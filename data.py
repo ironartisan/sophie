@@ -27,7 +27,7 @@ def collate(data):
 
 def data_loader(path):
     dset = TrajDataset(path)
-    loader = DataLoader(dset, 1, shuffle=False, num_workers=NUM_WORKERS, collate_fn=collate)
+    loader = DataLoader(dset, BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, collate_fn=collate)
     return dset, loader
 
 class TrajDataset(Dataset):

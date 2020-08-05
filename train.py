@@ -16,7 +16,8 @@ from utils import gan_g_loss, gan_d_loss, l2_loss, displacement_error, final_dis
 from models import TrajectoryGenerator, TrajectoryDiscriminator
 
 from constants import *
-
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 def init_weights(m):
     classname = m.__class__.__name__
     if classname.find('Linear') != -1:
@@ -35,7 +36,8 @@ def main():
     print("Initializing val dataset")
     _, val_loader = data_loader(val_path)
 
-    iterations_per_epoch = len(train_dset) / D_STEPS
+    # iterations_per_epoch = len(train_dset) / D_STEPS
+    iterations_per_epoch = len(train_dset) / BATCH_SIZE / D_STEPS
     NUM_ITERATIONS = int(iterations_per_epoch * NUM_EPOCHS)
     print('There are {} iterations per epoch'.format(iterations_per_epoch))
 

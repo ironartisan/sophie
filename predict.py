@@ -30,7 +30,7 @@ class Infer(object):
     def get_loader(self):
         return data_loader(self.path)[-1]
 
-    def evaluate_helper(error):
+    def evaluate_helper(self, error):
         error = torch.stack(error, dim=1)
         error = torch.sum(error, dim=0)
         error = torch.min(error)
@@ -59,7 +59,7 @@ class Infer(object):
 
                 return obs_traj, pred_traj_fake, pred_traj_gt
 
-    def check_accuracy(self, generator):
+    def check_accuracy(self):
         ade_outer, fde_outer = [], []
         total_traj = 0
         metrics = {}
@@ -72,16 +72,16 @@ class Infer(object):
                 total_traj += pred_traj_gt.size(1)
 
                 for _ in range(NUM_SAMPLES):
-                    pred_traj_fake_rel = generator(obs_traj, obs_traj_rel)
+                    pred_traj_fake_rel = self.generator(obs_traj, obs_traj_rel)
                     pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
                     ade.append(displacement_error(pred_traj_fake, pred_traj_gt, mode='raw'))
                     fde.append(final_displacement_error(pred_traj_fake[-1], pred_traj_gt[-1], mode='raw'))
 
-                # ade_sum = evaluate_helper(ade)
-                # fde_sum = evaluate_helper(fde)
+                ade_sum = self.evaluate_helper(ade)
+                fde_sum = self.evaluate_helper(fde)
 
-                # ade_outer.append(ade_sum.item())
-                # fde_outer.append(fde_sum)
+                ade_outer.append(ade_sum.item())
+                fde_outer.append(fde_sum)
             ade = sum(ade_outer) / (total_traj * PRED_LEN)
             fde = sum(fde_outer) / (total_traj)
             metrics['ade'] = ade
@@ -134,10 +134,12 @@ class Infer(object):
 path = 'models/model.pt'
 infer = Infer(use_cuda=1)
 infer.load_model(path)
-obs_traj, pred_traj_fake, pred_traj_gt = infer.infer()
-
-print(obs_traj[:, : ,0])
-
+# obs_traj, pred_traj_fake, pred_traj_gt = infer.infer()
+#
+# print(obs_traj[:, : ,0])
+metrics = infer.check_accuracy()
+print('china_with_normal_tGAN_4 test ade is %f' % metrics['ade'])
+print('china_with_normal_tGAN_4 test fde is %f' % metrics['fde'])
 
 
 # load_and_evaluate(generator, 'train')
