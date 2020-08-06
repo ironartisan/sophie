@@ -14,6 +14,7 @@ from utils import get_dset_path
 from utils import relative_to_abs
 from utils import cal_ade,cal_fde
 from utils import gan_g_loss, gan_d_loss, l2_loss, displacement_error, final_displacement_error
+from utils import show_t
 from models import TrajectoryGenerator, TrajectoryDiscriminator
 
 from constants import *
@@ -89,6 +90,33 @@ class Infer(object):
 
             return metrics
 
+    def get_metrics(self):
+        ade_outer, fde_outer = [], []
+        total_traj = 0
+        metrics = {}
+        with torch.no_grad():
+            for batch in self.get_loader():
+                batch = [tensor.cuda() for tensor in batch]
+                (obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel) = batch
+
+                # ade, fde = [], []
+                total_traj += pred_traj_gt.size(1)
+
+                for _ in range(NUM_SAMPLES):
+                    pred_traj_fake_rel = self.generator(obs_traj, obs_traj_rel)
+                    pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
+                    ade = cal_ade(pred_traj_fake, pred_traj_gt, mode='sum')
+                    fde = cal_fde(pred_traj_fake, pred_traj_gt, mode='sum')
+
+                ade_outer.append(ade.item())
+                fde_outer.append(fde.item())
+            ade = sum(ade_outer) / (total_traj * PRED_LEN)
+            fde = sum(fde_outer) / (total_traj)
+            metrics['ade'] = ade
+            metrics['fde'] = fde
+
+            return metrics
+
     def predict(self, obs_traj, pred_traj_gt, obs_traj_rel):
         pred_traj_fake_rel = self.generator(
             obs_traj, obs_traj_rel
@@ -96,8 +124,8 @@ class Infer(object):
 
         pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
 
-        ade = cal_ade(pred_traj_gt, pred_traj_fake)
-        fde = cal_fde(pred_traj_gt, pred_traj_fake)
+        ade = cal_ade(pred_traj_gt, pred_traj_fake, mode='sum')
+        fde = cal_fde(pred_traj_gt, pred_traj_fake, mode='sum')
 
         pred_traj_fake = pred_traj_fake.cpu().detach().numpy()
         ade = ade.cpu().detach().numpy()
@@ -105,10 +133,8 @@ class Infer(object):
 
         return pred_traj_fake, ade, fde
 
-
     def get_one_data(self):
         with torch.no_grad():
-            # print(len(self.loader))
             for batch in self.get_loader():
                 if self.use_cuda == 1:
                     batch = [tensor.cuda() for tensor in batch]
@@ -118,12 +144,10 @@ class Infer(object):
 
                 return obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel
 
-
     def load_model(self, path):
         # torch.load最后返回的是一个dict，里面包含了保存模型时的一些参数和模型
         checkpoint = torch.load(path)
-        generator = self.get_generator(checkpoint)
-        return generator
+        self.get_generator(checkpoint)
 
     def get_generator(self, checkpoint):
         self.generator.load_state_dict(checkpoint['g'])
@@ -131,17 +155,25 @@ class Infer(object):
             self.generator.cuda()
         self.generator.eval()
 
-path = 'models/model.pt'
+path = 'temp/sophine_pre8.pt'
 infer = Infer(use_cuda=1)
 infer.load_model(path)
 # obs_traj, pred_traj_fake, pred_traj_gt = infer.infer()
 #
 # print(obs_traj[:, : ,0])
-metrics = infer.check_accuracy()
-print('china_with_normal_tGAN_4 test ade is %f' % metrics['ade'])
-print('china_with_normal_tGAN_4 test fde is %f' % metrics['fde'])
+# metrics = infer.get_metrics()
+# print('china_with_normal_tGAN_4 test ade is %f' % metrics['ade'])
+# print('china_with_normal_tGAN_4 test fde is %f' % metrics['fde'])
 
+# 获取一条数据
+obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel = infer.get_one_data()
+predictions = []
+sophine_pred, sophine_ade, sophine_fde = infer.predict(obs_traj, pred_traj_gt, obs_traj_rel)
+predictions.append([sophine_pred, sophine_ade, sophine_fde, 'sophine'])
+obs_traj = obs_traj.cpu().detach().numpy()
 
+pred_traj_gt = pred_traj_gt.cpu().detach().numpy()
+show_t(obs_traj[:, :, 0, :], pred_traj_gt, predictions, ASIA_PARM)
 # load_and_evaluate(generator, 'train')
 # load_and_evaluate(generator, 'val')
 # load_and_evaluate(generator, 'test')

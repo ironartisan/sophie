@@ -37,8 +37,8 @@ def evaluate(loader, generator):
             for _ in range(NUM_SAMPLES):
                 pred_traj_fake_rel = generator(obs_traj, obs_traj_rel)
                 pred_traj_fake = relative_to_abs(pred_traj_fake_rel, obs_traj[-1, :, 0, :])
-                ade.append(displacement_error(pred_traj_fake, pred_traj_gt, mode='raw'))
-                fde.append(final_displacement_error(pred_traj_fake[-1], pred_traj_gt[-1], mode='raw'))
+                ade.append(displacement_error(pred_traj_fake, pred_traj_gt, mode='sum'))
+                fde.append(final_displacement_error(pred_traj_fake[-1], pred_traj_gt[-1], mode='sum'))
 
             ade_sum = evaluate_helper(ade)
             fde_sum = evaluate_helper(fde)
@@ -56,7 +56,7 @@ def load_and_evaluate(generator, version):
     ade, fde = evaluate(loader, generator)
     print('{} Dataset: {}, Pred Len: {}, ADE: {:.2f}, FDE: {:.2f}'.format(version, DATASET_NAME, PRED_LEN, ade, fde))
 
-model = torch.load("model.pt")
+model = torch.load("sophine_pre8.pt")
 generator = TrajectoryGenerator()
 generator.load_state_dict(model['g'])
 generator.cuda()

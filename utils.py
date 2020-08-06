@@ -66,13 +66,15 @@ def final_displacement_error(
         return loss
     else:
         return torch.sum(loss)
-def cal_ade(pred_traj_gt, pred_traj_fake):
-    ade = displacement_error(pred_traj_fake, pred_traj_gt)
+
+
+def cal_ade(pred_traj_gt, pred_traj_fake, mode='sum'):
+    ade = displacement_error(pred_traj_fake, pred_traj_gt, mode=mode)
     return ade
 
 
-def cal_fde(pred_traj_gt, pred_traj_fake):
-    fde = final_displacement_error(pred_traj_fake[-1], pred_traj_gt[-1])
+def cal_fde(pred_traj_gt, pred_traj_fake, mode='sum'):
+    fde = final_displacement_error(pred_traj_fake[-1], pred_traj_gt[-1], mode=mode)
     return fde
 
 

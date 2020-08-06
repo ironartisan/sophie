@@ -31,7 +31,7 @@ def data_loader(path):
     return dset, loader
 
 class TrajDataset(Dataset):
-    def __init__(self, data_dir, min_ped=1):
+    def __init__(self, data_dir):
 
         super(TrajDataset, self).__init__()
         all_files = [os.path.join(data_dir, path) for path in os.listdir(data_dir) if path[0] != "." and path.endswith(".txt")]
