@@ -27,7 +27,7 @@ def collate(data):
 
 def data_loader(path):
     dset = TrajDataset(path)
-    loader = DataLoader(dset, BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, collate_fn=collate)
+    loader = DataLoader(dset, 64, shuffle=False, num_workers=NUM_WORKERS, collate_fn=collate)
     return dset, loader
 
 class TrajDataset(Dataset):
@@ -76,6 +76,8 @@ class TrajDataset(Dataset):
                     rel_curr_ped_seq = np.zeros(curr_ped_seq.shape)
                     rel_curr_ped_seq[:, 1:] = curr_ped_seq[:, 1:] - curr_ped_seq[:, :-1]
                     curr_seq[num_peds_considered, :, pad_front:pad_end] = curr_ped_seq
+                    if curr_ped_seq.shape[-1] != seq_len:
+                        continue
                     curr_seq_rel[num_peds_considered, :, pad_front:pad_end] = rel_curr_ped_seq
                     num_peds_considered += 1
 

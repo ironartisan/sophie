@@ -11,7 +11,7 @@ import torch
 from constants import *
 
 def get_dset_path(dset_name, dset_type):
-    return os.path.join('datasets', dset_name, dset_type)
+    return os.path.join('dataset', dset_name, dset_type)
 
 def relative_to_abs(rel_traj, start_pos):
     rel_traj = rel_traj.permute(1, 0, 2)
@@ -87,7 +87,6 @@ def process_normal(traj_data, normal_parm):
 
     return traj_data
 
-
 def show_t(obs_traj, pred_traj_gt, predictions, param):
     obs_traj = process_normal(obs_traj, param)
     pred_traj_gt = process_normal(pred_traj_gt, param)
@@ -119,6 +118,31 @@ def show_t(obs_traj, pred_traj_gt, predictions, param):
     plt.title(result_text, y=-0.2)
 
     ax.legend()
+    plt.show()
+
+def show_xy(obs_traj, pred_traj_gt, predictions, param):
+    marker_size = 3
+    obs_traj = process_normal(obs_traj, param)
+    pred_traj_gt = process_normal(pred_traj_gt, param)
+
+    for i in range(len(predictions)):
+        predictions[i][0] = process_normal(predictions[i][0], param)
+        predictions[i][0] = numpy.concatenate((numpy.expand_dims(obs_traj[-1, :, :], axis=0), predictions[i][0]),
+                                              axis=0)
+
+    pred_traj_gt = numpy.concatenate((numpy.expand_dims(obs_traj[-1, :, :], axis=0), pred_traj_gt), axis=0)
+
+    plt.plot(obs_traj[:, 0, 0], obs_traj[:, 0, 1], label='input', linewidth=3)
+    plt.plot(pred_traj_gt[:, 0, 0], pred_traj_gt[:, 0, 1],marker='D', markersize=marker_size,
+             label='ground truth')
+
+    for i in range(len(predictions)):
+        (prediction, ade, fde, label) = predictions[i]
+        plt.plot(prediction[:, 0, 0], prediction[:, 0, 1], marker=MARKER_LIST[i], markersize=marker_size,
+                 label=label)
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+
     plt.show()
 
 

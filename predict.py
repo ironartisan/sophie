@@ -14,7 +14,7 @@ from utils import get_dset_path
 from utils import relative_to_abs
 from utils import cal_ade,cal_fde
 from utils import gan_g_loss, gan_d_loss, l2_loss, displacement_error, final_displacement_error
-from utils import show_t
+from utils import show_xy
 from models import TrajectoryGenerator, TrajectoryDiscriminator
 
 from constants import *
@@ -158,9 +158,11 @@ class Infer(object):
 path = 'temp/sophine_pre8.pt'
 infer = Infer(use_cuda=1)
 infer.load_model(path)
+
 # obs_traj, pred_traj_fake, pred_traj_gt = infer.infer()
-#
 # print(obs_traj[:, : ,0])
+# obs_traj_nor =obs_traj[:, : ,0]
+# print(obs_traj_nor)
 # metrics = infer.get_metrics()
 # print('china_with_normal_tGAN_4 test ade is %f' % metrics['ade'])
 # print('china_with_normal_tGAN_4 test fde is %f' % metrics['fde'])
@@ -173,7 +175,7 @@ predictions.append([sophine_pred, sophine_ade, sophine_fde, 'sophine'])
 obs_traj = obs_traj.cpu().detach().numpy()
 
 pred_traj_gt = pred_traj_gt.cpu().detach().numpy()
-show_t(obs_traj[:, :, 0, :], pred_traj_gt, predictions, ASIA_PARM)
+show_xy(obs_traj[:, :, 0, :], pred_traj_gt, predictions, ASIA_PARM)
 # load_and_evaluate(generator, 'train')
 # load_and_evaluate(generator, 'val')
 # load_and_evaluate(generator, 'test')
